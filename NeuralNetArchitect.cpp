@@ -299,16 +299,19 @@ protected:
 	Neuron* neurons;
 	NeuralLayer* previousLayer;
 
-	//nudge input layer activations with appropriate derivatives of cost function dC/da * da/di
-	void injectErrorBackwards(double costArray[] = nullptr)
+	//Set error of neurons with activations directly used to calculate cost dC/da
+	void setError(double costArray[])
 	{
-		//if output layer, set error of neurons before injecting error backwards
 		if (costArray != nullptr)
 		{
 			for (auto i = 0; i < neuronArrayLength * neuronArrayWidth; i++)
 				neurons[i].setError(costArray[i]);
 		}
+	}
 
+	//nudge input layer activations with appropriate derivatives of cost function dC/da * da/di
+	void injectErrorBackwards()
+	{
 		for (auto i = 0; i < neuronArrayLength * neuronArrayWidth; i++)
 			neurons[i].injectInputRespectiveCostDerivation();
 	}
@@ -458,7 +461,9 @@ public:
 	//transmit error to input neurons and apply learned parameter updates
 	void propagateBackward(int batchSize, double learningRate, double* costArray = nullptr)
 	{
-		injectErrorBackwards(costArray);
+		setError(costArray);
+
+		injectErrorBackwards();
 
 		updateParameters(batchSize, learningRate);
 	}
@@ -739,7 +744,7 @@ int main()
 	double* errorVector = new double[outputCount];
 	for (auto i = 0; i < outputCount; i++)
 	{//todo: Cost function would go here, default to partial dC/da of MSE Cost Function
-		errorVector[i] = (2/outputCount)*(20 - network.getOutputs()[i])*(-1);
+		errorVector[i] = (2 / outputCount) * (20 - network.getOutputs()[i]) * (-1);
 	}
 
 	network.propagateBackwards(errorVector);
